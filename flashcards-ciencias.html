@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flashcards de Ciências - Helena</title>
+<style>
+  :root{
+    --verde:#2e9e5b;
+    --verde-d:#1f7a44;
+    --azul:#2f7fd6;
+    --azul-d:#1f5fa8;
+    --vermelho:#e15050;
+    --vermelho-d:#c23a3a;
+    --bg:#f4f7f6;
+    --card:#ffffff;
+    --texto:#23303a;
+    --muted:#6b7a82;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:linear-gradient(160deg,#eaf6ee,#eaf1fb 60%,#f4f7f6);
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--texto);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px 60px;
+  }
+  .wrap{width:100%;max-width:640px;}
+  h1{font-size:1.6rem;margin:0 0 4px;text-align:center;}
+  .subtitle{text-align:center;color:var(--muted);margin:0 0 24px;font-size:1.05rem;}
+  .hidden{display:none !important;}
+  .card-box{
+    background:var(--card);
+    border-radius:20px;
+    box-shadow:0 6px 24px rgba(30,60,50,.08);
+    padding:28px 24px;
+    margin-bottom:20px;
+  }
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    border:none;border-radius:16px;
+    font-size:1.1rem;font-weight:700;
+    padding:18px 20px;
+    width:100%;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--verde);color:#fff;}
+  .btn-primary:hover{background:var(--verde-d);}
+  .btn-secondary{background:#eef2f3;color:var(--texto);}
+  .btn-blue{background:var(--azul);color:#fff;}
+  .btn-blue:hover{background:var(--azul-d);}
+  .btn-row{display:flex;gap:12px;margin-top:14px;}
+  .btn-ok{background:#e4f7ea;color:var(--verde-d);border:2px solid var(--verde);}
+  .btn-err{background:#fdeaea;color:var(--vermelho-d);border:2px solid var(--vermelho);}
+  .btn[disabled]{opacity:.45;pointer-events:none;}
+  .tag{
+    display:inline-block;background:#eaf1fb;color:var(--azul-d);
+    font-size:.8rem;font-weight:700;border-radius:999px;padding:5px 12px;margin-bottom:10px;
+  }
+  .tag-erro{background:#fdeaea;color:var(--vermelho-d);}
+  .progress-wrap{background:#e3e9e8;border-radius:999px;height:10px;overflow:hidden;margin-bottom:18px;}
+  .progress-bar{background:var(--verde);height:100%;width:0%;transition:width .25s ease;}
+  .progress-label{text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:6px;}
+  .question{font-size:1.3rem;font-weight:700;line-height:1.4;margin:6px 0 16px;}
+  .answer{
+    background:#f6fbf8;border-left:4px solid var(--verde);
+    border-radius:10px;padding:14px 16px;font-size:1.08rem;line-height:1.5;margin-bottom:18px;
+  }
+  .center{text-align:center;}
+  .score-big{font-size:2.6rem;font-weight:800;margin:6px 0;}
+  .score-msg{font-size:1.1rem;margin-bottom:18px;}
+  .review-item{
+    border:1px solid #eee;border-radius:14px;padding:14px 16px;margin-bottom:12px;background:#fff;
+  }
+  .review-item .q{font-weight:700;margin-bottom:6px;}
+  .review-item .a{color:var(--muted);font-size:.97rem;line-height:1.45;}
+  .history{font-size:.92rem;color:var(--muted);margin-top:6px;}
+  .history table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .history td{padding:6px 4px;border-bottom:1px solid #eee;}
+  .footer-note{text-align:center;color:var(--muted);font-size:.82rem;margin-top:30px;}
+  .toggle-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px;font-size:.95rem;color:var(--muted);}
+  .toggle-row input{width:20px;height:20px;}
+  .share-box textarea{
+    width:100%;min-height:90px;border-radius:10px;border:1px solid #ddd;padding:10px;font-size:.85rem;color:var(--muted);
+  }
+  .copied-msg{color:var(--verde-d);font-weight:700;text-align:center;margin-top:8px;font-size:.9rem;}
+  .emoji-big{font-size:2.4rem;text-align:center;margin-bottom:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TELA INICIAL -->
+  <div id="tela-home">
+    <h1>🔬 Flashcards de Ciências</h1>
+    <p class="subtitle">Helena · 5º ano · Páginas 50-55 e 58-65</p>
+
+    <div class="card-box">
+      <p style="margin-top:0">Vai aparecer uma pergunta. Pense na resposta, toque em <b>"Mostrar resposta"</b> e diga se você acertou ou errou. No final você vê o que precisa reforçar. 😊</p>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="chk-embaralhar" checked>
+        <label for="chk-embaralhar">Embaralhar a ordem das perguntas</label>
+      </div>
+
+      <button class="btn btn-primary" onclick="iniciarQuiz(todasAsCartas())">▶️ Começar (todas as 39 perguntas)</button>
+    </div>
+
+    <div id="bloco-historico" class="card-box hidden">
+      <h3 style="margin-top:0">📈 Histórico</h3>
+      <div id="historico-conteudo"></div>
+    </div>
+
+    <p class="footer-note">Conteúdo baseado no livro de Ciências (págs. 50-55 e 58-65).</p>
+  </div>
+
+  <!-- TELA QUIZ -->
+  <div id="tela-quiz" class="hidden">
+    <div class="progress-label" id="quiz-progress-label">Pergunta 1 de 39</div>
+    <div class="progress-wrap"><div class="progress-bar" id="quiz-progress-bar"></div></div>
+
+    <div class="card-box">
+      <span class="tag" id="quiz-tag">Tema</span>
+      <div class="question" id="quiz-pergunta">Pergunta...</div>
+
+      <div id="quiz-resposta-box" class="answer hidden"></div>
+
+      <button class="btn btn-blue" id="btn-mostrar-resposta" onclick="mostrarResposta()">👀 Mostrar resposta</button>
+
+      <div class="btn-row hidden" id="quiz-botoes-avaliacao">
+        <button class="btn btn-err" onclick="responder(false)">❌ Errei</button>
+        <button class="btn btn-ok" onclick="responder(true)">✅ Acertei</button>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="sairDoQuiz()">🏠 Sair</button>
+  </div>
+
+  <!-- TELA RESULTADO -->
+  <div id="tela-resultado" class="hidden">
+    <div class="card-box center">
+      <div class="emoji-big" id="resultado-emoji">🎉</div>
+      <div class="score-big" id="resultado-score">0/0</div>
+      <div class="score-msg" id="resultado-msg">Mensagem</div>
+      <div class="progress-wrap"><div class="progress-bar" id="resultado-bar"></div></div>
+    </div>
+
+    <div class="card-box" id="bloco-reforco">
+      <h3 style="margin-top:0">📌 Temas para reforçar</h3>
+      <div id="lista-reforco"></div>
+    </div>
+
+    <div class="card-box">
+      <button class="btn btn-primary" id="btn-revisar-errados" onclick="revisarErrados()">🔁 Revisar só os errados</button>
+      <div style="height:10px"></div>
+      <button class="btn btn-secondary" onclick="voltarHome()">🔄 Refazer do início</button>
+      <div style="height:10px"></div>
+      <button class="btn btn-blue" onclick="compartilharResultado()">📤 Compartilhar resultado</button>
+      <div class="share-box hidden" id="share-box">
+        <p class="footer-note" style="margin-top:14px">Não foi possível abrir o compartilhamento automático. Copie o texto abaixo e envie para o papai:</p>
+        <textarea id="share-text" readonly onclick="this.select()"></textarea>
+        <div class="copied-msg hidden" id="copied-msg">✅ Copiado!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ========================== DADOS ========================== */
+const CARTAS = [
+  // ---- O AR ----
+  {tema:"O Ar", sub:"Atmosfera", p:"O que é a atmosfera?", r:"É a camada de gases que envolve todo o planeta Terra. O ar está ao redor das pessoas, nos poros do solo, dissolvido na água e até dentro do corpo dos seres vivos."},
+  {tema:"O Ar", sub:"Atmosfera", p:"Por que é mais difícil respirar no topo de montanhas muito altas?", r:"Porque, quanto maior a altitude, mais rarefeito (menos denso) fica o ar. Quanto mais próximo do nível do mar, mais ar está presente na atmosfera."},
+  {tema:"O Ar", sub:"Composição do ar", p:"Quais são os principais gases que formam o ar?", r:"Gás nitrogênio, gás oxigênio, gás carbônico e outros gases."},
+  {tema:"O Ar", sub:"Composição do ar", p:"Em 100 litros de ar, quantos litros são de gás nitrogênio?", r:"78 litros. É o gás presente em maior quantidade no ar."},
+  {tema:"O Ar", sub:"Composição do ar", p:"Em 100 litros de ar, quantos litros são de gás oxigênio? Por que ele é tão importante?", r:"21 litros. O oxigênio é indispensável para a respiração da maioria dos seres vivos (pessoas, animais e plantas)."},
+  {tema:"O Ar", sub:"Propriedades do ar", p:"Como o experimento dos balões mostra que o ar tem massa?", r:"Quando um balão cheio de ar é esvaziado, a régua (como uma balança) se inclina para o lado do balão que continua cheio. Isso mostra que o ar tem massa."},
+  {tema:"O Ar", sub:"Propriedades do ar", p:"Como o experimento da garrafa dentro da água mostra que o ar ocupa espaço?", r:"A água só entra na garrafa cheia de ar quando o ar escapa (ao inclinar a garrafa). Isso mostra que o ar ocupa espaço."},
+  {tema:"O Ar", sub:"Propriedades do ar", p:"O ar tem forma definida?", r:"Não. O ar não tem forma definida e tende a se espalhar até ocupar todo o espaço disponível no recipiente ou ambiente."},
+  {tema:"O Ar", sub:"Propriedades do ar", p:"O ar pode ser comprimido? O que é o êmbolo?", r:"Sim, o ar pode ser comprimido (espremido) para ocupar um espaço menor. O êmbolo é o disco ou cilindro móvel no interior de seringas e bombas, usado para comprimir o ar."},
+  {tema:"O Ar", sub:"Vento", p:"O que é o vento e como ele se forma?", r:"O vento é o movimento do ar. Ele se forma porque o ar quente, mais \"leve\", sobe, e o ar frio, mais \"pesado\", desce e empurra o ar quente para cima."},
+  {tema:"O Ar", sub:"Vento", p:"Um balão cheio de ar em temperatura ambiente conseguiria flutuar como um balão de ar quente? Por quê?", r:"Não, porque o ar precisa estar aquecido (mais leve que o ar frio ao redor) para o balão flutuar."},
+  {tema:"O Ar", sub:"Efeito estufa e ozônio", p:"O que é o efeito estufa?", r:"É o fenômeno em que certos gases da atmosfera retêm parte do calor do Sol perto da superfície da Terra, evitando grandes variações de temperatura entre o dia e a noite."},
+  {tema:"O Ar", sub:"Efeito estufa e ozônio", p:"Qual gás intensifica o efeito estufa e contribui para o aumento da temperatura média do planeta?", r:"O gás carbônico (CO2), liberado pelas queimadas e pela queima de combustíveis."},
+  {tema:"O Ar", sub:"Efeito estufa e ozônio", p:"Qual é a função da camada de ozônio?", r:"Filtrar parte dos raios ultravioleta emitidos pelo Sol, protegendo os seres vivos."},
+  {tema:"O Ar", sub:"Efeito estufa e ozônio", p:"O que causou a diminuição da camada de ozônio?", r:"O uso industrial de gases chamados CFCs (clorofluorcarbonetos), usados antigamente em aerossóis e geladeiras."},
+  {tema:"O Ar", sub:"Poluição e cuidados", p:"O que causa a poluição do ar?", r:"A queima de combustíveis em veículos e indústrias, e as queimadas de florestas e plantações."},
+  {tema:"O Ar", sub:"Poluição e cuidados", p:"Cite três medidas que ajudam a diminuir a poluição do ar.", r:"Usar filtros nas chaminés das indústrias; reduzir o uso de automóveis (priorizar transporte público ou bicicleta); manter a cobertura vegetal (florestas e plantas)."},
+  {tema:"O Ar", sub:"Poluição e cuidados", p:"Por que as plantas ajudam a manter a qualidade do ar?", r:"Porque absorvem parte do gás carbônico da atmosfera e ajudam a manter a umidade do ar."},
+
+  // ---- A ÁGUA ----
+  {tema:"A Água", sub:"Água doce e salgada", p:"Por que a água é fundamental para os seres vivos?", r:"Porque ela dissolve substâncias e as transporta pelo organismo, e muitos seres vivos (como os aquáticos) só sobrevivem nos ambientes onde ela está presente."},
+  {tema:"A Água", sub:"Água doce e salgada", p:"Como a água é classificada de acordo com a quantidade de sais dissolvidos?", r:"Em água doce (baixo teor de sais) e água salgada (alto teor de sais, impróprias para consumo humano)."},
+  {tema:"A Água", sub:"Água doce e salgada", p:"De cada 100 litros de água que existem na Terra, quantos litros são de água doce?", r:"Apenas 3 litros. Os outros 97 litros são de água salgada."},
+  {tema:"A Água", sub:"Água doce e salgada", p:"O que são aquíferos?", r:"São reservas subterrâneas de água doce, formadas pela infiltração da água da chuva através dos poros do solo e das rochas."},
+  {tema:"A Água", sub:"Estados físicos", p:"Quais são os três estados físicos da água? Dê um exemplo de cada.", r:"Sólido (gelo, neve, granizo), líquido (água dos rios, lagos e oceanos) e gasoso (vapor-d'água, invisível no ar)."},
+  {tema:"A Água", sub:"Estados físicos", p:"O que é fusão? Em que temperatura ela ocorre ao nível do mar?", r:"É a passagem da água do estado sólido para o líquido. Ocorre a partir de 0°C ao nível do mar (por isso o gelo derrete fora do congelador)."},
+  {tema:"A Água", sub:"Estados físicos", p:"O que é solidificação?", r:"É a passagem da água do estado líquido para o sólido, que ocorre em locais com temperatura abaixo de 0°C (como dentro de um congelador)."},
+  {tema:"A Água", sub:"Estados físicos", p:"O que é vaporização e quais são suas duas formas?", r:"É a passagem da água do estado líquido para o gasoso. Pode ocorrer por evaporação (lenta, à temperatura ambiente) ou ebulição (rápida, a 100°C ao nível do mar)."},
+  {tema:"A Água", sub:"Estados físicos", p:"O que é condensação? Dê um exemplo.", r:"É a passagem da água do estado gasoso (vapor) para o líquido. Exemplo: o vapor que sai de uma panela forma gotas de água na tampa."},
+  {tema:"A Água", sub:"Estados físicos", p:"O que é transpiração nos seres vivos?", r:"É o processo pelo qual parte da água do corpo de um animal ou planta é eliminada para a superfície, geralmente em resposta ao calor (como o suor nas pessoas)."},
+  {tema:"A Água", sub:"Misturas e solubilidade", p:"O que significa dizer que o açúcar é solúvel em água?", r:"Significa que o açúcar se dissolve na água, formando uma solução. Mesmo \"desaparecendo\" da vista, ele continua lá, pois deixa o gosto doce."},
+  {tema:"A Água", sub:"Misturas e solubilidade", p:"O que é uma solução?", r:"É um líquido que contém substâncias dissolvidas nele. A água, por dissolver substâncias, é chamada de solvente."},
+  {tema:"A Água", sub:"Misturas e solubilidade", p:"Cite dois materiais pouco solúveis ou insolúveis em água.", r:"Areia e óleo. Eles praticamente não se dissolvem na água; é possível enxergar os dois materiais separadamente."},
+  {tema:"A Água", sub:"Misturas e solubilidade", p:"Por que a água do mar é salgada?", r:"Porque, ao longo de milhões de anos, a água das chuvas e dos rios dissolveu sais minerais das rochas e os levou até os oceanos, onde se acumularam."},
+  {tema:"A Água", sub:"Misturas e solubilidade", p:"Se a água do mar é salgada, por que a chuva que cai na praia não é salgada?", r:"Porque, quando a água do mar evapora, os sais ficam para trás. Só a água (sem os sais) se transforma em vapor, condensa nas nuvens e cai como chuva."},
+  {tema:"A Água", sub:"Ciclo da água", p:"O que é o ciclo da água?", r:"É o processo contínuo em que a água muda de estado físico e se desloca de um lugar para outro na natureza, o tempo todo."},
+  {tema:"A Água", sub:"Ciclo da água", p:"Quais são as principais etapas do ciclo da água?", r:"Evaporação/transpiração (a água vira vapor), condensação (o vapor forma nuvens), precipitação (chuva, neve ou granizo) e infiltração (parte da água penetra no solo)."},
+  {tema:"A Água", sub:"Ciclo da água", p:"Por que o ciclo da água é importante para a agricultura?", r:"Porque garante o fornecimento constante de água, fundamental para a irrigação e o desenvolvimento das plantações."},
+  {tema:"A Água", sub:"Ciclo da água", p:"Como o Brasil usa o movimento da água para gerar energia elétrica?", r:"Por meio de usinas hidrelétricas, que transformam a energia do movimento das águas represadas em energia elétrica."},
+  {tema:"A Água", sub:"Cuidar da água", p:"Por que é preciso cuidar da água?", r:"Porque o consumo de água doce não para de aumentar (crescimento populacional, uso industrial e agrícola) e muitas fontes de água ficam poluídas, tornando-se escassas e impróprias para consumo."},
+  {tema:"A Água", sub:"Cuidar da água", p:"O que transforma a água usada em esgoto?", r:"Quando a água usada nas casas e estabelecimentos se mistura com sabão, fezes, urina e outras impurezas, ela se transforma em esgoto, impróprio para consumo."},
+];
+
+/* ========================== ESTADO ========================== */
+let fila = [];        // cartas da rodada atual
+let indice = 0;
+let respostaRevelada = false;
+let acertosRodada = [];
+let errosRodada = [];
+let ultimoModo = "todas"; // "todas" ou "errados"
+
+function todasAsCartas(){ return CARTAS.slice(); }
+
+function embaralhar(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ========================== NAVEGAÇÃO ========================== */
+function mostrarTela(id){
+  ["tela-home","tela-quiz","tela-resultado"].forEach(t=>{
+    document.getElementById(t).classList.toggle("hidden", t!==id);
+  });
+}
+
+function iniciarQuiz(cartas, modo){
+  ultimoModo = modo || "todas";
+  const embaralharAtivo = document.getElementById("chk-embaralhar").checked;
+  fila = embaralharAtivo ? embaralhar(cartas) : cartas.slice();
+  indice = 0;
+  acertosRodada = [];
+  errosRodada = [];
+  mostrarTela("tela-quiz");
+  renderCartaAtual();
+}
+
+function renderCartaAtual(){
+  const total = fila.length;
+  document.getElementById("quiz-progress-label").textContent = `Pergunta ${indice+1} de ${total}`;
+  document.getElementById("quiz-progress-bar").style.width = `${(indice/total)*100}%`;
+
+  const c = fila[indice];
+  document.getElementById("quiz-tag").textContent = `${c.tema} · ${c.sub}`;
+  document.getElementById("quiz-pergunta").textContent = c.p;
+
+  respostaRevelada = false;
+  document.getElementById("quiz-resposta-box").classList.add("hidden");
+  document.getElementById("quiz-resposta-box").textContent = "";
+  document.getElementById("btn-mostrar-resposta").classList.remove("hidden");
+  document.getElementById("quiz-botoes-avaliacao").classList.add("hidden");
+}
+
+function mostrarResposta(){
+  const c = fila[indice];
+  document.getElementById("quiz-resposta-box").textContent = c.r;
+  document.getElementById("quiz-resposta-box").classList.remove("hidden");
+  document.getElementById("btn-mostrar-resposta").classList.add("hidden");
+  document.getElementById("quiz-botoes-avaliacao").classList.remove("hidden");
+  respostaRevelada = true;
+}
+
+function responder(acertou){
+  const c = fila[indice];
+  if(acertou){ acertosRodada.push(c); } else { errosRodada.push(c); }
+
+  if(indice < fila.length-1){
+    indice++;
+    renderCartaAtual();
+  } else {
+    finalizarRodada();
+  }
+}
+
+function sairDoQuiz(){
+  mostrarTela("tela-home");
+  renderHistorico();
+}
+
+/* ========================== RESULTADO ========================== */
+function finalizarRodada(){
+  const total = acertosRodada.length + errosRodada.length;
+  const pct = total ? Math.round((acertosRodada.length/total)*100) : 0;
+
+  document.getElementById("quiz-progress-bar").style.width = "100%";
+
+  document.getElementById("resultado-score").textContent = `${acertosRodada.length}/${total}`;
+  document.getElementById("resultado-bar").style.width = `${pct}%`;
+
+  let emoji, msg;
+  if(pct === 100){ emoji="🏆"; msg="Perfeito! Você acertou tudo!"; }
+  else if(pct >= 90){ emoji="🎉"; msg="Mandou muito bem!"; }
+  else if(pct >= 70){ emoji="👍"; msg="Muito bom! Só revisar alguns pontos."; }
+  else if(pct >= 50){ emoji="💪"; msg="Bom começo! Vamos reforçar esses temas juntos."; }
+  else { emoji="📚"; msg="Vamos estudar mais esses temas juntos — você consegue!"; }
+  document.getElementById("resultado-emoji").textContent = emoji;
+  document.getElementById("resultado-msg").textContent = `${msg} (${pct}%)`;
+
+  renderReforco();
+  salvarHistorico(total, acertosRodada.length, errosRodada);
+
+  document.getElementById("btn-revisar-errados").classList.toggle("hidden", errosRodada.length===0);
+
+  mostrarTela("tela-resultado");
+  document.getElementById("share-box").classList.add("hidden");
+}
+
+function renderReforco(){
+  const bloco = document.getElementById("bloco-reforco");
+  const lista = document.getElementById("lista-reforco");
+  lista.innerHTML = "";
+
+  if(errosRodada.length === 0){
+    bloco.classList.add("hidden");
+    return;
+  }
+  bloco.classList.remove("hidden");
+
+  // agrupar por tema > sub
+  const grupos = {};
+  errosRodada.forEach(c=>{
+    const chave = `${c.tema} · ${c.sub}`;
+    if(!grupos[chave]) grupos[chave] = [];
+    grupos[chave].push(c);
+  });
+
+  Object.keys(grupos).forEach(chave=>{
+    const titulo = document.createElement("div");
+    titulo.className = "tag tag-erro";
+    titulo.style.marginTop = "10px";
+    titulo.textContent = chave;
+    lista.appendChild(titulo);
+
+    grupos[chave].forEach(c=>{
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<div class="q">${c.p}</div><div class="a">${c.r}</div>`;
+      lista.appendChild(div);
+    });
+  });
+}
+
+function revisarErrados(){
+  if(errosRodada.length===0) return;
+  iniciarQuiz(errosRodada, "errados");
+}
+
+function voltarHome(){
+  mostrarTela("tela-home");
+  renderHistorico();
+}
+
+/* ========================== HISTÓRICO (localStorage) ========================== */
+const CHAVE_HIST = "helena_ciencias_historico_v1";
+
+function lerHistorico(){
+  try{
+    const raw = localStorage.getItem(CHAVE_HIST);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function salvarHistorico(total, acertos, erros){
+  try{
+    const hist = lerHistorico();
+    hist.push({
+      data: new Date().toISOString(),
+      total: total,
+      acertos: acertos,
+      modo: ultimoModo,
+      temasErrados: [...new Set(erros.map(c=>`${c.tema} · ${c.sub}`))]
+    });
+    // manter só os últimos 20
+    while(hist.length>20) hist.shift();
+    localStorage.setItem(CHAVE_HIST, JSON.stringify(hist));
+  }catch(e){ /* localStorage indisponível, segue sem salvar */ }
+}
+
+function formatarData(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+
+function renderHistorico(){
+  const hist = lerHistorico();
+  const bloco = document.getElementById("bloco-historico");
+  const cont = document.getElementById("historico-conteudo");
+  if(hist.length===0){ bloco.classList.add("hidden"); return; }
+  bloco.classList.remove("hidden");
+
+  const ultimos = hist.slice(-5).reverse();
+  let html = `<table>`;
+  ultimos.forEach(h=>{
+    const pct = h.total ? Math.round((h.acertos/h.total)*100) : 0;
+    const tagModo = h.modo === "errados" ? " (revisão)" : "";
+    html += `<tr><td>${formatarData(h.data)}${tagModo}</td><td style="text-align:right;font-weight:700">${h.acertos}/${h.total} (${pct}%)</td></tr>`;
+  });
+  html += `</table>`;
+  cont.innerHTML = html;
+}
+
+/* ========================== COMPARTILHAR ========================== */
+function montarTextoResultado(){
+  const total = acertosRodada.length + errosRodada.length;
+  const pct = total ? Math.round((acertosRodada.length/total)*100) : 0;
+  let txt = `Resultado de Ciências - Helena\n`;
+  txt += `Data: ${formatarData(new Date().toISOString())}\n`;
+  txt += `Acertos: ${acertosRodada.length}/${total} (${pct}%)\n`;
+  if(errosRodada.length>0){
+    txt += `\nTemas para reforçar:\n`;
+    const grupos = {};
+    errosRodada.forEach(c=>{
+      const chave = `${c.tema} - ${c.sub}`;
+      grupos[chave] = true;
+    });
+    Object.keys(grupos).forEach(chave=>{ txt += `- ${chave}\n`; });
+  } else {
+    txt += `\nAcertou tudo! 🎉\n`;
+  }
+  return txt;
+}
+
+function compartilharResultado(){
+  const texto = montarTextoResultado();
+  if(navigator.share){
+    navigator.share({title:"Resultado de Ciências - Helena", text: texto}).catch(()=>{ mostrarCaixaCompartilhar(texto); });
+  } else {
+    mostrarCaixaCompartilhar(texto);
+  }
+}
+
+function mostrarCaixaCompartilhar(texto){
+  const box = document.getElementById("share-box");
+  const area = document.getElementById("share-text");
+  area.value = texto;
+  box.classList.remove("hidden");
+  document.getElementById("copied-msg").classList.add("hidden");
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(()=>{
+      document.getElementById("copied-msg").classList.remove("hidden");
+    }).catch(()=>{});
+  }
+}
+
+/* ========================== INÍCIO ========================== */
+renderHistorico();
+</script>
+</body>
+</html>
