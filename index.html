@@ -106,6 +106,14 @@
   .stat-row{display:flex;justify-content:space-around;text-align:center;margin-bottom:6px;}
   .stat-row .item b{display:block;font-size:1.4rem;color:var(--azul-d);}
   .stat-row .item span{font-size:.8rem;color:var(--muted);}
+  .deck-btn{
+    background:#fff;border:2px solid #e3e9ea;border-radius:16px;
+    padding:16px 18px;margin-bottom:14px;cursor:pointer;text-align:left;width:100%;
+    -webkit-tap-highlight-color:transparent;transition:all .15s ease;
+  }
+  .deck-btn:active{transform:scale(.98);}
+  .deck-btn .deck-titulo{font-weight:700;font-size:1.08rem;color:var(--texto);margin-bottom:4px;}
+  .deck-btn .deck-desc{font-size:.92rem;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -113,7 +121,22 @@
 
   <!-- TELA CARREGANDO -->
   <div id="tela-carregando">
-    <div class="card-box center">Carregando perguntas... ⏳</div>
+    <div class="card-box center">Carregando quizzes... ⏳</div>
+  </div>
+
+  <!-- TELA SEM QUIZZES -->
+  <div id="tela-sem-decks" class="hidden">
+    <div class="card-box center">
+      <p style="margin-top:0">Ainda não tem nenhum quiz cadastrado aqui. 📭</p>
+      <p class="footer-note" style="margin-top:0">Peça para um adulto criar um quiz no painel.</p>
+    </div>
+  </div>
+
+  <!-- TELA ESCOLHA DE QUIZ -->
+  <div id="tela-decks" class="hidden">
+    <h1 id="decks-titulo">📚 Escolha um quiz</h1>
+    <p class="subtitle" id="decks-subtitle"></p>
+    <div id="lista-decks"></div>
   </div>
 
   <!-- TELA INICIAL -->
@@ -135,6 +158,8 @@
       <h3 style="margin-top:0">📈 Últimas rodadas</h3>
       <div id="historico-conteudo"></div>
     </div>
+
+    <button class="btn btn-secondary hidden" id="btn-trocar-quiz" onclick="mostrarTelaDecks()">🔄 Trocar quiz</button>
 
     <p class="footer-note" id="home-footer">Conteúdo baseado no livro de Ciências.</p>
   </div>
@@ -184,24 +209,28 @@
 
 </div>
 
+<!-- Config fixo desta pasta (define window.QUIZ_CONFIG: materia/aluno) -->
+<script src="config.js"></script>
 <!-- Config do Firebase (define window.FIREBASE_CONFIG) -->
 <script src="firebase-config.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 /* ========================== FIREBASE ========================== */
 const fbApp = initializeApp(window.FIREBASE_CONFIG);
 const db = getFirestore(fbApp);
+const QUIZ_CONFIG = window.QUIZ_CONFIG;
 
 async function enviarResultado(doc){
   return addDoc(collection(db, "resultados"), { ...doc, timestamp: serverTimestamp() });
 }
 
 /* ========================== ESTADO ========================== */
-let DECK = null;           // deck atual {id, titulo, materia, aluno, perguntas:[...]}
-let fila = [];              // perguntas da rodada atual (com índice original)
+let DECK = null;            // deck atual {id, titulo, materia, aluno, perguntas:[...]}
+let decksDisponiveis = [];  // todos os decks desta matéria/aluno, vindos do Firestore
+let fila = [];               // perguntas da rodada atual (com índice original)
 let indice = 0;
 let acertosRodada = [];
 let errosRodada = [];
@@ -209,13 +238,13 @@ let respondidoAtual = false;
 let ultimoModo = "completa"; // "completa" ou "revisao"
 const TAMANHO_RODADA = 10;
 
-/* ========================== CARREGAR DECK ========================== */
-async function carregarDeck(){
-  const manifest = await fetch("manifest.json").then(r=>r.json());
-  // Por enquanto usamos sempre o primeiro deck disponível (Helena).
-  const entrada = manifest[0];
-  const dados = await fetch(entrada.arquivo).then(r=>r.json());
-  DECK = dados;
+/* ========================== CARREGAR DECKS (FIRESTORE) ========================== */
+async function carregarDecksDisponiveis(){
+  const q = query(collection(db, "decks"), where("materia", "==", QUIZ_CONFIG.materia));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(d => d.aluno === QUIZ_CONFIG.aluno);
 }
 
 function statsKey(){ return `quiz_stats_${DECK.id}`; }
@@ -274,9 +303,40 @@ function embaralhar(arr){
 
 /* ========================== NAVEGAÇÃO ========================== */
 function mostrarTela(id){
-  ["tela-carregando","tela-home","tela-quiz","tela-resultado"].forEach(t=>{
+  ["tela-carregando","tela-sem-decks","tela-decks","tela-home","tela-quiz","tela-resultado"].forEach(t=>{
     document.getElementById(t).classList.toggle("hidden", t!==id);
   });
+}
+
+window.mostrarTelaDecks = function(){
+  renderListaDecks();
+  document.getElementById("decks-subtitle").textContent = `${QUIZ_CONFIG.aluno} · ${QUIZ_CONFIG.materia}`;
+  mostrarTela("tela-decks");
+};
+
+function renderListaDecks(){
+  const cont = document.getElementById("lista-decks");
+  cont.innerHTML = "";
+  decksDisponiveis.forEach(d=>{
+    const btn = document.createElement("button");
+    btn.className = "deck-btn";
+    btn.innerHTML = `<div class="deck-titulo">${d.titulo}</div>${d.descricao ? `<div class="deck-desc">${d.descricao}</div>` : ""}`;
+    btn.onclick = () => selecionarDeck(d);
+    cont.appendChild(btn);
+  });
+}
+
+function selecionarDeck(deck){
+  DECK = deck;
+  const emoji = EMOJI_POR_MATERIA[DECK.materia] || "📚";
+  document.title = `Quiz de ${DECK.materia} - ${DECK.aluno}`;
+  document.getElementById("home-titulo").textContent = `${emoji} Quiz de ${DECK.materia}`;
+  document.getElementById("home-subtitle").textContent = `${DECK.aluno} · ${DECK.titulo}`;
+  document.getElementById("home-footer").textContent = `Conteúdo baseado no livro de ${DECK.materia.toLowerCase()}. ${DECK.descricao || ""}`;
+  document.getElementById("btn-trocar-quiz").classList.toggle("hidden", decksDisponiveis.length<=1);
+  mostrarTela("tela-home");
+  renderHistoricoLocal();
+  reenviarPendentes();
 }
 
 window.iniciarRodada = function(){
@@ -548,15 +608,16 @@ const EMOJI_POR_MATERIA = {
 };
 
 async function iniciar(){
-  await carregarDeck();
-  const emoji = EMOJI_POR_MATERIA[DECK.materia] || "📚";
-  document.title = `Quiz de ${DECK.materia} - ${DECK.aluno}`;
-  document.getElementById("home-titulo").textContent = `${emoji} Quiz de ${DECK.materia}`;
-  document.getElementById("home-subtitle").textContent = `${DECK.aluno} · ${DECK.titulo}`;
-  document.getElementById("home-footer").textContent = `Conteúdo baseado no livro de ${DECK.materia.toLowerCase()}. ${DECK.descricao || ""}`;
-  mostrarTela("tela-home");
-  renderHistoricoLocal();
-  reenviarPendentes();
+  decksDisponiveis = await carregarDecksDisponiveis();
+  if(decksDisponiveis.length === 0){
+    mostrarTela("tela-sem-decks");
+    return;
+  }
+  if(decksDisponiveis.length === 1){
+    selecionarDeck(decksDisponiveis[0]);
+  } else {
+    window.mostrarTelaDecks();
+  }
 }
 iniciar();
 </script>
